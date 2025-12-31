@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+:root {
+  --color-f: #ec4899;
+  --color-m: #f59e0b;
+  --color-k: #1e293b;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  min-height: 100vh;
+}
+
+.card-flip {
+  perspective: 1000px;
+}
+
+.card-flip-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.card-flip.flipped .card-flip-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+}
+
+.drop-zone {
+  transition: all 0.2s ease;
+}
+
+.drop-zone.drag-over {
+  transform: scale(1.02);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+}
+
+.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+/* Mobile enlarged card overlay */
+.card-flip.enlarged {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85vw;
+  max-width: 350px;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  z-index: 100;
+}
+
+.card-flip.enlarged .card-flip-inner {
+  transform: rotateY(180deg);
+}
+
+/* Dark overlay behind enlarged card */
+.card-flip.enlarged::before {
+  content: '';
+  position: fixed;
+  top: -50vh;
+  left: -50vw;
+  width: 200vw;
+  height: 200vh;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: -1;
+}
+
+/* Larger text on enlarged card back */
+.card-flip.enlarged .card-back {
+  padding: 1.5rem;
+}
+
+.card-flip.enlarged .card-back h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.card-flip.enlarged .card-back p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
