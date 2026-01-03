@@ -297,20 +297,9 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
             className="bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-slate-600"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header with image */}
-            <div className="relative bg-gradient-to-br from-slate-700 to-slate-800">
-              <div className="aspect-video bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center overflow-hidden">
-                {fullImageUrl ? (
-                  <img 
-                    src={fullImageUrl} 
-                    alt={personality.name}
-                    className="w-full h-full object-cover"
-                    draggable="false"
-                  />
-                ) : (
-                  <span className="text-8xl font-bold text-slate-500">{initial}</span>
-                )}
-              </div>
+            {/* Header */}
+            <div className="relative bg-gradient-to-br from-slate-700 to-slate-800 p-6 pb-4">
+              <h2 className="text-3xl font-bold text-white pr-12">{personality.name}</h2>
               <button
                 onClick={() => setIsExpanded(false)}
                 className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white text-xl font-bold transition-colors backdrop-blur-sm"
@@ -321,10 +310,20 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <h2 className="text-3xl font-bold text-white mb-4">{personality.name}</h2>
+            <div className="flex-1 overflow-y-auto p-6 pt-4">
+              {/* Image - constrained to text width, full image visible */}
+              {fullImageUrl && (
+                <div className="mb-6 w-full">
+                  <img 
+                    src={fullImageUrl} 
+                    alt={personality.name}
+                    className="w-full h-auto object-contain rounded-lg"
+                    draggable="false"
+                  />
+                </div>
+              )}
               
-              <div className="mt-4">
+              <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
