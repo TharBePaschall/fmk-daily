@@ -140,7 +140,7 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
   const cardClasses = [
     'card-flip',
     'w-full',
-    'aspect-[3/4]',
+    'aspect-[2/3] md:aspect-[3/4]',
     isFlipped ? 'flipped' : 'cursor-grab active:cursor-grabbing',
     isAssigned ? 'opacity-50 pointer-events-none' : ''
   ].filter(Boolean).join(' ')
@@ -165,8 +165,8 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
     >
       <div className="card-flip-inner relative w-full h-full">
         {/* Front of card */}
-        <div className="card-front absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-xl border border-slate-600 overflow-hidden">
-          <div className="h-2/3 bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center overflow-hidden">
+        <div className="card-front absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-xl border border-slate-600 overflow-hidden flex flex-col">
+          <div className="flex-1 bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center overflow-hidden min-h-0">
             {thumbnailUrl ? (
               <img 
                 src={thumbnailUrl} 
@@ -175,16 +175,16 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
                 loading="lazy"
               />
             ) : (
-              <span className="text-6xl font-bold text-slate-500">{initial}</span>
+              <span className="text-4xl md:text-6xl font-bold text-slate-500">{initial}</span>
             )}
           </div>
-          <div className="h-1/3 p-3 flex flex-col justify-center">
-            <h3 className="text-white font-bold text-sm md:text-base text-center leading-tight">
+          <div className="p-3 pb-8 flex flex-col justify-center min-h-[80px] md:min-h-[90px] relative">
+            <h3 className="text-white font-bold text-sm md:text-base text-center leading-tight mb-1">
               {personality.name}
             </h3>
-          </div>
-          <div className="absolute bottom-2 right-2 text-slate-500 text-xs">
-            Tap for bio
+            <div className="absolute bottom-2 right-2 text-slate-500 text-xs">
+              Tap for bio
+            </div>
           </div>
         </div>
 
