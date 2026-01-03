@@ -3,15 +3,17 @@ import { getPersonalityDetails } from '../lib/wikipedia'
 
 function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTouchStart: onTouchDragStart, onTouchEnd: onTouchDragEnd }) {
   const [isFlipped, setIsFlipped] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const [wikiData, setWikiData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [touchStartPos, setTouchStartPos] = useState(null)
   const cardRef = useRef(null)
+  const expandedRef = useRef(null)
 
-  // Fetch Wikipedia data when card is first flipped
+  // Fetch Wikipedia data when card is first flipped or expanded
   useEffect(() => {
-    if (isFlipped && !wikiData && !isLoading) {
+    if ((isFlipped || isExpanded) && !wikiData && !isLoading) {
       setIsLoading(true)
       getPersonalityDetails(personality.wikipedia)
         .then(data => {
@@ -20,7 +22,7 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
         })
         .catch(() => setIsLoading(false))
     }
-  }, [isFlipped, wikiData, isLoading, personality.wikipedia])
+  }, [isFlipped, isExpanded, wikiData, isLoading, personality.wikipedia])
 
   // Click outside to close flipped card
   useEffect(() => {
@@ -44,6 +46,36 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
     }
   }, [isFlipped])
 
+  // Click outside to close expanded modal
+  useEffect(() => {
+    if (!isExpanded) return
+
+    const handleClickOutside = (event) => {
+      if (expandedRef.current && !expandedRef.current.contains(event.target)) {
+        setIsExpanded(false)
+      }
+    }
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsExpanded(false)
+      }
+    }
+
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside)
+      document.addEventListener('touchstart', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
+    }, 10)
+
+    return () => {
+      clearTimeout(timeoutId)
+      document.removeEventListener('click', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isExpanded])
+
   const handleClick = () => {
     if (isDragging) {
       setIsDragging(false)
@@ -52,7 +84,8 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
     
     if (disabled) return
 
-    setIsFlipped(!isFlipped)
+    // Open expanded view instead of flipping
+    setIsExpanded(true)
   }
 
   const handleDragStart = (e) => {
@@ -162,6 +195,7 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
 
   const initial = personality.name.charAt(0).toUpperCase()
   const thumbnailUrl = personality.thumbnail || wikiData?.thumbnail
+  const fullImageUrl = wikiData?.thumbnail || personality.thumbnail
 
   // Build className strings
   const cardClasses = [
@@ -173,83 +207,150 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
   ].filter(Boolean).join(' ')
 
   return (
-    <div
-      ref={cardRef}
-      className={cardClasses}
-      draggable={!disabled && !isFlipped}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onClick={handleClick}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={() => {
-        setIsDragging(false)
-        setTouchStartPos(null)
-        onTouchDragEnd?.(null)
-      }}
-      style={{ touchAction: isDragging ? 'none' : 'auto' }}
-    >
-      <div className="card-flip-inner relative w-full h-full">
-        {/* Front of card */}
-        <div className="card-front absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-xl border border-slate-600 overflow-hidden flex flex-col">
-          <div className="flex-1 bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center overflow-hidden min-h-0">
-            {thumbnailUrl ? (
-              <img 
-                src={thumbnailUrl} 
-                alt={personality.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                draggable="false"
-              />
-            ) : (
-              <span className="text-4xl md:text-6xl font-bold text-slate-500">{initial}</span>
-            )}
+    <>
+      <div
+        ref={cardRef}
+        className={cardClasses}
+        draggable={!disabled && !isFlipped && !isExpanded}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={() => {
+          setIsDragging(false)
+          setTouchStartPos(null)
+          onTouchDragEnd?.(null)
+        }}
+        style={{ touchAction: isDragging ? 'none' : 'auto' }}
+      >
+        <div className="card-flip-inner relative w-full h-full">
+          {/* Front of card */}
+          <div className="card-front absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-xl border border-slate-600 overflow-hidden flex flex-col">
+            <div className="flex-1 bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center overflow-hidden min-h-0">
+              {thumbnailUrl ? (
+                <img 
+                  src={thumbnailUrl} 
+                  alt={personality.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  draggable="false"
+                />
+              ) : (
+                <span className="text-4xl md:text-6xl font-bold text-slate-500">{initial}</span>
+              )}
+            </div>
+            <div className="px-3 pt-3 pb-10 flex flex-col justify-center min-h-[100px] md:min-h-[90px] relative">
+              <h3 className="text-white font-bold text-sm md:text-base text-center leading-tight">
+                {personality.name}
+              </h3>
+              <div className="absolute bottom-2 right-2 text-slate-500 text-xs whitespace-nowrap">
+                Tap to expand
+              </div>
+            </div>
           </div>
-          <div className="px-3 pt-3 pb-10 flex flex-col justify-center min-h-[100px] md:min-h-[90px] relative">
-            <h3 className="text-white font-bold text-sm md:text-base text-center leading-tight">
-              {personality.name}
-            </h3>
-            <div className="absolute bottom-2 right-2 text-slate-500 text-xs whitespace-nowrap">
-              Tap for bio
+
+          {/* Back of card */}
+          <div className="card-back absolute inset-0 bg-gradient-to-br from-indigo-900 to-slate-800 rounded-2xl shadow-xl border border-indigo-500 p-4 overflow-hidden">
+            <h3 className="text-white font-bold text-sm mb-2">{personality.name}</h3>
+            
+            <div className="h-[calc(100%-4rem)] overflow-y-auto">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <p className="text-slate-300 text-xs leading-relaxed">
+                  {wikiData?.bio || 'Loading biography...'}
+                </p>
+              )}
+            </div>
+
+            {wikiData?.wikipediaUrl && (
+              <a
+                href={wikiData.wikipediaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="absolute bottom-2 left-2 text-indigo-400 text-xs hover:underline"
+              >
+                Read more
+              </a>
+            )}
+            
+            <div className="absolute bottom-2 right-2 text-indigo-400 text-xs">
+              Tap to close
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Back of card */}
-        <div className="card-back absolute inset-0 bg-gradient-to-br from-indigo-900 to-slate-800 rounded-2xl shadow-xl border border-indigo-500 p-4 overflow-hidden">
-          <h3 className="text-white font-bold text-sm mb-2">{personality.name}</h3>
-          
-          <div className="h-[calc(100%-4rem)] overflow-y-auto">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+      {/* Expanded Modal */}
+      {isExpanded && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={() => setIsExpanded(false)}
+        >
+          <div
+            ref={expandedRef}
+            className="bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-slate-600"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with image */}
+            <div className="relative bg-gradient-to-br from-slate-700 to-slate-800">
+              <div className="aspect-video bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center overflow-hidden">
+                {fullImageUrl ? (
+                  <img 
+                    src={fullImageUrl} 
+                    alt={personality.name}
+                    className="w-full h-full object-cover"
+                    draggable="false"
+                  />
+                ) : (
+                  <span className="text-8xl font-bold text-slate-500">{initial}</span>
+                )}
               </div>
-            ) : (
-              <p className="text-slate-300 text-xs leading-relaxed">
-                {wikiData?.bio || 'Loading biography...'}
-              </p>
-            )}
-          </div>
+              <button
+                onClick={() => setIsExpanded(false)}
+                className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white text-xl font-bold transition-colors backdrop-blur-sm"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
 
-          {wikiData?.wikipediaUrl && (
-            <a
-              href={wikiData.wikipediaUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="absolute bottom-2 left-2 text-indigo-400 text-xs hover:underline"
-            >
-              Read more
-            </a>
-          )}
-          
-          <div className="absolute bottom-2 right-2 text-indigo-400 text-xs">
-            Tap to close
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <h2 className="text-3xl font-bold text-white mb-4">{personality.name}</h2>
+              
+              <div className="mt-4">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : (
+                  <p className="text-slate-300 text-base leading-relaxed whitespace-pre-wrap">
+                    {wikiData?.bio || 'Loading biography...'}
+                  </p>
+                )}
+              </div>
+
+              {wikiData?.wikipediaUrl && (
+                <a
+                  href={wikiData.wikipediaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-6 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Read more on Wikipedia →
+                </a>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   )
 }
 
