@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import GameBoard from './components/GameBoard'
-import ShareModal from './components/ShareModal'
+import GameBoard from './components/GameBoard.jsx'
+import ShareModal from './components/ShareModal.jsx'
 import { getDailyPersonalities } from './lib/dailyGame'
 import { getDeviceId } from './lib/deviceId'
 import { hasPlayedToday, saveSubmission, getSubmission } from './lib/storage'
