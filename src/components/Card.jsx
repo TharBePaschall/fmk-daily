@@ -64,6 +64,33 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
     setIsDragging(true)
     e.dataTransfer.setData('personality', JSON.stringify(personality))
     e.dataTransfer.effectAllowed = 'move'
+    
+    // Create a custom drag image to prevent flipping
+    // Use the front face of the card only, without any transforms
+    const cardFront = cardRef.current.querySelector('.card-front')
+    if (cardFront) {
+      const dragImage = cardFront.cloneNode(true)
+      dragImage.style.transform = 'none'
+      dragImage.style.opacity = '0.8'
+      dragImage.style.position = 'fixed'
+      dragImage.style.top = '-1000px'
+      dragImage.style.left = '-1000px'
+      dragImage.style.width = cardRef.current.offsetWidth + 'px'
+      dragImage.style.height = cardRef.current.offsetHeight + 'px'
+      document.body.appendChild(dragImage)
+      
+      // Set the drag image offset to center
+      const rect = cardRef.current.getBoundingClientRect()
+      e.dataTransfer.setDragImage(dragImage, rect.width / 2, rect.height / 2)
+      
+      // Clean up after a short delay
+      setTimeout(() => {
+        if (document.body.contains(dragImage)) {
+          document.body.removeChild(dragImage)
+        }
+      }, 0)
+    }
+    
     onDragStart?.(personality)
   }
 
@@ -173,16 +200,17 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
                 alt={personality.name}
                 className="w-full h-full object-cover"
                 loading="lazy"
+                draggable="false"
               />
             ) : (
               <span className="text-4xl md:text-6xl font-bold text-slate-500">{initial}</span>
             )}
           </div>
-          <div className="p-3 pb-8 flex flex-col justify-center min-h-[80px] md:min-h-[90px] relative">
-            <h3 className="text-white font-bold text-sm md:text-base text-center leading-tight mb-1">
+          <div className="px-3 pt-3 pb-10 flex flex-col justify-center min-h-[100px] md:min-h-[90px] relative">
+            <h3 className="text-white font-bold text-sm md:text-base text-center leading-tight">
               {personality.name}
             </h3>
-            <div className="absolute bottom-2 right-2 text-slate-500 text-xs">
+            <div className="absolute bottom-2 right-2 text-slate-500 text-xs whitespace-nowrap">
               Tap for bio
             </div>
           </div>

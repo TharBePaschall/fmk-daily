@@ -4,6 +4,7 @@ import CardHolder from './CardHolder'
 
 function GameBoard({ personalities, assignments, setAssignments }) {
   const [draggingPersonality, setDraggingPersonality] = useState(null)
+  const [touchDragData, setTouchDragData] = useState(null)
 
   const handleDrop = (type, personality) => {
     // Remove personality from any existing assignment
@@ -19,6 +20,11 @@ function GameBoard({ personalities, assignments, setAssignments }) {
     newAssignments[type] = personality
     setAssignments(newAssignments)
     setDraggingPersonality(null)
+    setTouchDragData(null)
+  }
+
+  const handleTouchDrop = (type, personality) => {
+    handleDrop(type, personality)
   }
 
   const handleRemove = (type) => {
@@ -40,6 +46,8 @@ function GameBoard({ personalities, assignments, setAssignments }) {
             isAssigned={isPersonalityAssigned(personality)}
             onDragStart={setDraggingPersonality}
             onDragEnd={() => setDraggingPersonality(null)}
+            onTouchStart={(touchData) => setTouchDragData(touchData)}
+            onTouchEnd={(touchEndData) => setTouchDragData(touchEndData)}
             disabled={isPersonalityAssigned(personality)}
           />
         ))}
@@ -57,18 +65,24 @@ function GameBoard({ personalities, assignments, setAssignments }) {
           assignedPersonality={assignments.F}
           onDrop={handleDrop}
           onRemove={handleRemove}
+          touchDragData={touchDragData}
+          onTouchDrop={handleTouchDrop}
         />
         <CardHolder
           type="M"
           assignedPersonality={assignments.M}
           onDrop={handleDrop}
           onRemove={handleRemove}
+          touchDragData={touchDragData}
+          onTouchDrop={handleTouchDrop}
         />
         <CardHolder
           type="K"
           assignedPersonality={assignments.K}
           onDrop={handleDrop}
           onRemove={handleRemove}
+          touchDragData={touchDragData}
+          onTouchDrop={handleTouchDrop}
         />
       </div>
     </div>

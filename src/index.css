@@ -34,6 +34,18 @@ body {
   backface-visibility: hidden;
 }
 
+/* Prevent text selection and image dragging during card drag */
+.card-flip[draggable="true"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.card-flip[draggable="true"] img {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 .card-back {
   transform: rotateY(180deg);
 }
