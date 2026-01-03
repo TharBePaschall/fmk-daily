@@ -1,85 +1,60 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { getSubmissionByShareCode, hasPlayedToday, getSubmission } from '../lib/storage'
-import { getDeviceId } from '../lib/deviceId'
+import { useParams, Link } from 'react-router-dom'
+import { getSubmissionByShareCode } from '../lib/storage'
 
 function Share() {
   const { shareCode } = useParams()
-  const navigate = useNavigate()
-  const [sharedResult, setSharedResult] = useState(null)
-  const [myResult, setMyResult] = useState(null)
-  const [status, setStatus] = useState('loading')
+  const [result, setResult] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    const loadResults = async () => {
-      const deviceId = getDeviceId()
-      
-      const played = await hasPlayedToday(deviceId)
-      
-      if (!played) {
-        localStorage.setItem('pending_share_code', shareCode)
-        setStatus('must-play')
+    const fetchShare = async () => {
+      if (!shareCode) {
+        setError('No share code provided')
+        setLoading(false)
         return
       }
 
-      const shared = await getSubmissionByShareCode(shareCode)
-      if (!shared) {
-        setStatus('not-found')
-        return
+      try {
+        const submission = await getSubmissionByShareCode(shareCode)
+        if (submission) {
+          setResult(submission)
+        } else {
+          setError('Share code not found')
+        }
+      } catch (err) {
+        console.error('Error fetching share:', err)
+        setError('Failed to load shared results')
+      } finally {
+        setLoading(false)
       }
-
-      const mine = await getSubmission(deviceId)
-      
-      setSharedResult(shared)
-      setMyResult(mine)
-      setStatus('ready')
     }
 
-    loadResults()
+    fetchShare()
   }, [shareCode])
 
-  if (status === 'loading') {
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
-        <div className="text-white text-xl">Loading results...</div>
+        <div className="text-white text-xl">Loading shared results...</div>
       </div>
     )
   }
 
-  if (status === 'must-play') {
+  if (error || !result) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="bg-slate-800/50 rounded-2xl p-6 md:p-8 text-center max-w-md">
-          <h1 className="text-2xl font-bold text-white mb-4">Play First!</h1>
-          <p className="text-slate-300 mb-6">
-            You need to complete today&apos;s FMK before you can see your friend&apos;s choices.
-          </p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-3 bg-gradient-to-r from-pink-500 via-amber-500 to-slate-700 text-white rounded-xl font-bold hover:scale-105 transition-all"
+        <div className="bg-slate-800/50 rounded-2xl p-8 text-center max-w-md">
+          <h1 className="text-2xl font-bold text-white mb-4">Share Not Found</h1>
+          <p className="text-slate-400 mb-6">{error || 'This share code does not exist or has expired.'}</p>
+          <Link
+            to="/"
+            className="px-6 py-3 bg-gradient-to-r from-pink-500 via-amber-500 to-slate-700 text-white rounded-xl font-bold hover:scale-105 transition-all inline-block"
           >
-            Play Now
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (status === 'not-found') {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="bg-slate-800/50 rounded-2xl p-6 md:p-8 text-center max-w-md">
-          <h1 className="text-2xl font-bold text-white mb-4">Link Not Found</h1>
-          <p className="text-slate-300 mb-6">
-            This share link is invalid or has expired.
-          </p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-3 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-all"
-          >
-            Go Home
-          </button>
+            Play FMK Daily
+          </Link>
         </div>
       </div>
     )
@@ -91,60 +66,69 @@ function Share() {
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
           FMK Daily
         </h1>
-        <p className="text-slate-400">Compare Results</p>
+        <p className="text-slate-400">
+          Shared Results - {new Date(result.date).toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })}
+        </p>
       </header>
 
-      <div className="max-w-4xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-slate-800/50 rounded-2xl p-6 text-center">
-            <h2 className="text-xl font-bold text-white mb-4">Their Choices</h2>
-            <ResultGrid result={sharedResult} />
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-slate-800/50 rounded-2xl p-6 md:p-8 text-center">
+          <h2 className="text-2xl font-bold text-white mb-6">Shared Choices</h2>
+          
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <ResultCard 
+              label="F" 
+              personality={result.F} 
+              bgColor="bg-pink-500/20" 
+              textColor="text-pink-400" 
+            />
+            <ResultCard 
+              label="M" 
+              personality={result.M} 
+              bgColor="bg-amber-500/20" 
+              textColor="text-amber-400" 
+            />
+            <ResultCard 
+              label="K" 
+              personality={result.K} 
+              bgColor="bg-slate-500/20" 
+              textColor="text-slate-400" 
+            />
           </div>
 
-          <div className="bg-slate-800/50 rounded-2xl p-6 text-center">
-            <h2 className="text-xl font-bold text-white mb-4">Your Choices</h2>
-            <ResultGrid result={myResult} />
-          </div>
-        </div>
-
-        <div className="text-center mt-8">
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-3 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-all"
+          <Link
+            to="/"
+            className="px-6 py-3 bg-gradient-to-r from-pink-500 via-amber-500 to-slate-700 text-white rounded-xl font-bold hover:scale-105 transition-all inline-block"
           >
-            Back to Home
-          </button>
+            Play Your Own FMK
+          </Link>
         </div>
       </div>
-    </div>
-  )
-}
-
-function ResultGrid({ result }) {
-  if (!result) return null
-
-  return (
-    <div className="grid grid-cols-3 gap-3">
-      <ResultCard label="F" personality={result.F} bgColor="bg-pink-500/20" textColor="text-pink-400" />
-      <ResultCard label="M" personality={result.M} bgColor="bg-amber-500/20" textColor="text-amber-400" />
-      <ResultCard label="K" personality={result.K} bgColor="bg-slate-500/20" textColor="text-slate-400" />
     </div>
   )
 }
 
 function ResultCard({ label, personality, bgColor, textColor }) {
-  const name = personality ? personality.name : 'Unknown'
-  const initial = name.charAt(0).toUpperCase()
-
+  if (!personality) return null
+  
+  const initial = personality.name ? personality.name.charAt(0).toUpperCase() : ''
+  const name = personality.name || 'Unknown'
+  
   return (
-    <div className={bgColor + ' rounded-xl p-3'}>
+    <div className={bgColor + ' rounded-xl p-4'}>
       <div className={textColor + ' font-bold text-lg mb-2'}>{label}</div>
-      <div className="w-12 h-12 rounded-full bg-slate-600 flex items-center justify-center mx-auto mb-2">
-        <span className="text-xl font-bold text-slate-400">{initial}</span>
+      <div className="w-16 h-16 rounded-full bg-slate-600 flex items-center justify-center mx-auto mb-2">
+        <span className="text-2xl font-bold text-slate-400">{initial}</span>
       </div>
-      <div className="text-white text-xs">{name}</div>
+      <div className="text-white text-sm">{name}</div>
     </div>
   )
 }
 
 export default Share
+

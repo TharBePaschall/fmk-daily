@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { getPersonalityDetails } from '../lib/wikipedia'
 
-function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled }) {
+function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTouchStart: onTouchDragStart, onTouchEnd: onTouchDragEnd }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [wikiData, setWikiData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [touchStartPos, setTouchStartPos] = useState(null)
   const cardRef = useRef(null)
 
   // Fetch Wikipedia data when card is first flipped
@@ -71,6 +72,67 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled }) {
     onDragEnd?.(e)
   }
 
+  // Touch event handlers for mobile
+  const handleTouchStart = (e) => {
+    if (isFlipped || disabled || isAssigned) {
+      return
+    }
+
+    const touch = e.touches[0]
+    const touchData = { 
+      x: touch.clientX, 
+      y: touch.clientY, 
+      time: Date.now(),
+      personality 
+    }
+    setTouchStartPos(touchData)
+    setIsDragging(true)
+    onTouchDragStart?.(touchData)
+  }
+
+  const handleTouchMove = (e) => {
+    if (!touchStartPos || !isDragging) return
+
+    // Prevent scrolling while dragging
+    e.preventDefault()
+  }
+
+  const handleTouchEnd = (e) => {
+    if (!touchStartPos || !isDragging) {
+      setTouchStartPos(null)
+      return
+    }
+
+    const touch = e.changedTouches[0]
+    const endPos = { x: touch.clientX, y: touch.clientY }
+    const timeDiff = Date.now() - touchStartPos.time
+    const distance = Math.sqrt(
+      Math.pow(endPos.x - touchStartPos.x, 2) + 
+      Math.pow(endPos.y - touchStartPos.y, 2)
+    )
+
+    // If it was a quick tap (not a drag), treat it as a click
+    if (timeDiff < 300 && distance < 10) {
+      setIsDragging(false)
+      setTouchStartPos(null)
+      // Clear touch drag data to prevent accidental drops
+      onTouchDragEnd?.(null)
+      handleClick()
+      return
+    }
+
+    // Pass touch end data to parent to handle drop detection
+    onTouchDragEnd?.({
+      personality: touchStartPos.personality,
+      endPos,
+      startPos: { x: touchStartPos.x, y: touchStartPos.y }
+    })
+
+    setIsDragging(false)
+    setTouchStartPos(null)
+    onDragEnd?.(e)
+  }
+
   const initial = personality.name.charAt(0).toUpperCase()
   const thumbnailUrl = personality.thumbnail || wikiData?.thumbnail
 
@@ -91,6 +153,15 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled }) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={() => {
+        setIsDragging(false)
+        setTouchStartPos(null)
+        onTouchDragEnd?.(null)
+      }}
+      style={{ touchAction: isDragging ? 'none' : 'auto' }}
     >
       <div className="card-flip-inner relative w-full h-full">
         {/* Front of card */}

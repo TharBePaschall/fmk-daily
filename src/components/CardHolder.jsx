@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-function CardHolder({ type, assignedPersonality, onDrop, onRemove }) {
+function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData, onTouchDrop }) {
   const [isDragOver, setIsDragOver] = useState(false)
+  const holderRef = useRef(null)
 
   const colors = {
     F: { bg: 'from-pink-500/20 to-pink-600/20', border: 'border-pink-500', text: 'text-pink-400', label: 'F*ck' },
@@ -37,9 +38,33 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove }) {
     holderClasses += ' drag-over border-solid'
   }
 
+  // Handle touch-based drop detection
+  useEffect(() => {
+    if (!touchDragData || !holderRef.current || !touchDragData.endPos) return
+
+    const { endPos } = touchDragData
+    const rect = holderRef.current.getBoundingClientRect()
+    
+    // Check if touch end position is within this cardholder's bounds
+    if (
+      endPos.x >= rect.left &&
+      endPos.x <= rect.right &&
+      endPos.y >= rect.top &&
+      endPos.y <= rect.bottom
+    ) {
+      // Only process if this is a valid drop (not just a tap)
+      if (touchDragData.personality) {
+        onTouchDrop?.(type, touchDragData.personality)
+        setIsDragOver(false)
+      }
+    }
+  }, [touchDragData, type, onTouchDrop])
+
   return (
     <div
+      ref={holderRef}
       className={holderClasses}
+      data-holder-type={type}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
