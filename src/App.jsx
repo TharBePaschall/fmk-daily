@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import GameBoard from './components/GameBoard.jsx'
 import ShareModal from './components/ShareModal.jsx'
 import { getDailyPersonalities } from './lib/dailyGame'
@@ -181,6 +182,15 @@ function App() {
           onClose={() => setShowShareModal(false)}
         />
       )}
+
+      <footer className="mt-12 mb-4 text-center">
+        <Link
+          to="/terms"
+          className="text-slate-400 hover:text-white text-sm transition-colors"
+        >
+          Terms of Service
+        </Link>
+      </footer>
     </div>
   )
 }

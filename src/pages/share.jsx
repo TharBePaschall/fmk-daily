@@ -36,16 +36,24 @@ function Share() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
         <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
         <div className="text-white text-xl">Loading shared results...</div>
+        <footer className="mt-auto mb-4 text-center w-full">
+          <Link
+            to="/terms"
+            className="text-slate-400 hover:text-white text-sm transition-colors"
+          >
+            Terms of Service
+          </Link>
+        </footer>
       </div>
     )
   }
 
   if (error || !result) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
         <div className="bg-slate-800/50 rounded-2xl p-8 text-center max-w-md">
           <h1 className="text-2xl font-bold text-white mb-4">Share Not Found</h1>
           <p className="text-slate-400 mb-6">{error || 'This share code does not exist or has expired.'}</p>
@@ -56,6 +64,14 @@ function Share() {
             Play FMK Daily
           </Link>
         </div>
+        <footer className="mt-auto mb-4 text-center w-full">
+          <Link
+            to="/terms"
+            className="text-slate-400 hover:text-white text-sm transition-colors"
+          >
+            Terms of Service
+          </Link>
+        </footer>
       </div>
     )
   }
@@ -109,6 +125,15 @@ function Share() {
           </Link>
         </div>
       </div>
+
+      <footer className="mt-12 mb-4 text-center">
+        <Link
+          to="/terms"
+          className="text-slate-400 hover:text-white text-sm transition-colors"
+        >
+          Terms of Service
+        </Link>
+      </footer>
     </div>
   )
 }
