@@ -9,20 +9,35 @@ function GameBoard({ personalities, assignments, setAssignments }) {
   const [isLoadingWikiData, setIsLoadingWikiData] = useState(false)
   const gameBoardRef = useRef(null)
   const previewPanelRef = useRef(null)
+  const currentCardIdRef = useRef(null)
 
   useEffect(() => {
-    if (selectedCard && !selectedCardWikiData && !isLoadingWikiData) {
+    if (!selectedCard) {
+      setSelectedCardWikiData(null)
+      currentCardIdRef.current = null
+      return
+    }
+
+    // If the selected card changed, clear the old data
+    if (currentCardIdRef.current !== selectedCard.id) {
+      setSelectedCardWikiData(null)
+      currentCardIdRef.current = selectedCard.id
+    }
+
+    // Fetch new data if we don't have it
+    if (!selectedCardWikiData && !isLoadingWikiData) {
       setIsLoadingWikiData(true)
       getPersonalityDetails(selectedCard.wikipedia)
         .then(data => {
-          setSelectedCardWikiData(data)
+          // Only set data if this is still the selected card
+          if (currentCardIdRef.current === selectedCard.id) {
+            setSelectedCardWikiData(data)
+          }
           setIsLoadingWikiData(false)
         })
         .catch(() => {
           setIsLoadingWikiData(false)
         })
-    } else if (!selectedCard) {
-      setSelectedCardWikiData(null)
     }
   }, [selectedCard, selectedCardWikiData, isLoadingWikiData])
 
@@ -31,10 +46,13 @@ function GameBoard({ personalities, assignments, setAssignments }) {
 
     const handleClickOutside = (event) => {
       if (!gameBoardRef.current) return
+
       const target = event.target
+      
       const isCard = target.closest('.card-flip')
       const isCardHolder = target.closest('[data-holder-type]')
       const isPreviewPanel = previewPanelRef.current && previewPanelRef.current.contains(target)
+      
       if (!isCard && !isCardHolder && !isPreviewPanel) {
         setSelectedCard(null)
       }
@@ -42,10 +60,13 @@ function GameBoard({ personalities, assignments, setAssignments }) {
 
     const handleTouchOutside = (event) => {
       if (!gameBoardRef.current) return
+
       const target = event.target
+      
       const isCard = target.closest('.card-flip')
       const isCardHolder = target.closest('[data-holder-type]')
       const isPreviewPanel = previewPanelRef.current && previewPanelRef.current.contains(target)
+      
       if (!isCard && !isCardHolder && !isPreviewPanel) {
         setSelectedCard(null)
       }
@@ -65,11 +86,13 @@ function GameBoard({ personalities, assignments, setAssignments }) {
 
   const handlePlaceCard = (type, personality) => {
     const newAssignments = { ...assignments }
+    
     Object.keys(newAssignments).forEach(key => {
       if (newAssignments[key]?.id === personality.id) {
         newAssignments[key] = null
       }
     })
+    
     newAssignments[type] = personality
     setAssignments(newAssignments)
     setSelectedCard(null)
@@ -124,12 +147,12 @@ function GameBoard({ personalities, assignments, setAssignments }) {
             Tap an F/M/K holder below to place this card
           </p>
           <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-            <div className="flex-shrink-0 w-full md:w-48 h-48 md:h-64 bg-slate-700 rounded-xl overflow-hidden flex items-center justify-center">
+            <div className="flex-shrink-0 w-full md:w-48 min-h-48 md:h-64 bg-slate-700 rounded-xl overflow-hidden flex items-center justify-center p-2">
               {selectedCardWikiData?.thumbnail || selectedCard.thumbnail ? (
                 <img 
                   src={selectedCardWikiData?.thumbnail || selectedCard.thumbnail} 
                   alt={selectedCard.name}
-                  className="w-full h-full object-cover"
+                  className="max-w-full max-h-full w-auto h-auto object-contain"
                 />
               ) : (
                 <span className="text-6xl font-bold text-slate-500">
