@@ -10,7 +10,6 @@ function GameBoard({ personalities, assignments, setAssignments }) {
   const gameBoardRef = useRef(null)
   const previewPanelRef = useRef(null)
 
-  // Fetch Wikipedia data when a card is selected
   useEffect(() => {
     if (selectedCard && !selectedCardWikiData && !isLoadingWikiData) {
       setIsLoadingWikiData(true)
@@ -27,21 +26,15 @@ function GameBoard({ personalities, assignments, setAssignments }) {
     }
   }, [selectedCard, selectedCardWikiData, isLoadingWikiData])
 
-  // Handle click outside cards and cardholders to deselect
   useEffect(() => {
     if (!selectedCard) return
 
     const handleClickOutside = (event) => {
       if (!gameBoardRef.current) return
-
       const target = event.target
-      
-      // Check if click is on a card, cardholder, or preview panel
       const isCard = target.closest('.card-flip')
       const isCardHolder = target.closest('[data-holder-type]')
       const isPreviewPanel = previewPanelRef.current && previewPanelRef.current.contains(target)
-      
-      // If click is outside cards, cardholders, and preview panel, deselect
       if (!isCard && !isCardHolder && !isPreviewPanel) {
         setSelectedCard(null)
       }
@@ -49,21 +42,15 @@ function GameBoard({ personalities, assignments, setAssignments }) {
 
     const handleTouchOutside = (event) => {
       if (!gameBoardRef.current) return
-
       const target = event.target
-      
-      // Check if touch is on a card, cardholder, or preview panel
       const isCard = target.closest('.card-flip')
       const isCardHolder = target.closest('[data-holder-type]')
       const isPreviewPanel = previewPanelRef.current && previewPanelRef.current.contains(target)
-      
-      // If touch is outside cards, cardholders, and preview panel, deselect
       if (!isCard && !isCardHolder && !isPreviewPanel) {
         setSelectedCard(null)
       }
     }
 
-    // Add event listeners with a small delay to avoid immediate deselection
     const timeoutId = setTimeout(() => {
       document.addEventListener('click', handleClickOutside)
       document.addEventListener('touchstart', handleTouchOutside)
@@ -77,31 +64,25 @@ function GameBoard({ personalities, assignments, setAssignments }) {
   }, [selectedCard])
 
   const handlePlaceCard = (type, personality) => {
-    // Remove personality from any existing assignment
     const newAssignments = { ...assignments }
-    
     Object.keys(newAssignments).forEach(key => {
       if (newAssignments[key]?.id === personality.id) {
         newAssignments[key] = null
       }
     })
-    
-    // Assign to new slot
     newAssignments[type] = personality
     setAssignments(newAssignments)
-    setSelectedCard(null) // Clear selection after placement
+    setSelectedCard(null)
   }
 
   const handleRemove = (type) => {
     setAssignments({ ...assignments, [type]: null })
-    // If the removed card was selected, clear selection
     if (selectedCard?.id === assignments[type]?.id) {
       setSelectedCard(null)
     }
   }
 
   const handleCardSelect = (personality) => {
-    // Toggle selection - if clicking the same card, deselect it
     if (selectedCard?.id === personality.id) {
       setSelectedCard(null)
     } else {
@@ -119,12 +100,10 @@ function GameBoard({ personalities, assignments, setAssignments }) {
     return Object.values(assignments).some(p => p?.id === personality.id)
   }
 
-  // Find the first unassigned card for pulsing animation
   const firstUnassignedCard = personalities.find(p => !isPersonalityAssigned(p))
 
   return (
     <div ref={gameBoardRef} className="max-w-4xl mx-auto">
-      {/* Cards */}
       <div className="grid grid-cols-3 gap-3 md:gap-6 mb-8">
         {personalities.map(personality => (
           <Card
@@ -139,11 +118,12 @@ function GameBoard({ personalities, assignments, setAssignments }) {
         ))}
       </div>
 
-      {/* Selected Card Preview */}
       {selectedCard && (
         <div ref={previewPanelRef} className="mb-6 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border-2 border-blue-500 p-4 md:p-6 shadow-xl">
+          <p className="text-center text-blue-400 text-sm mb-4 font-medium py-2.5">
+            Tap an F/M/K holder below to place this card
+          </p>
           <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-            {/* Image */}
             <div className="flex-shrink-0 w-full md:w-48 h-48 md:h-64 bg-slate-700 rounded-xl overflow-hidden flex items-center justify-center">
               {selectedCardWikiData?.thumbnail || selectedCard.thumbnail ? (
                 <img 
@@ -158,7 +138,6 @@ function GameBoard({ personalities, assignments, setAssignments }) {
               )}
             </div>
             
-            {/* Biography */}
             <div className="flex-1">
               <h3 className="text-xl md:text-2xl font-bold text-white mb-3">
                 {selectedCard.name}
@@ -174,20 +153,15 @@ function GameBoard({ personalities, assignments, setAssignments }) {
               </div>
             </div>
           </div>
-          <p className="text-center text-blue-400 text-sm mt-4 font-medium">
-            Tap an F/M/K holder below to place this card
-          </p>
         </div>
       )}
 
-      {/* Instructions */}
       <p className="text-center text-slate-400 mb-4 text-sm">
         {selectedCard 
           ? `Selected: ${selectedCard.name}. Tap an F/M/K holder below to place it.`
           : 'Tap a card to select it, then tap F/M/K to place it'}
       </p>
 
-      {/* Card holders */}
       <div className="grid grid-cols-3 gap-3 md:gap-6">
         <CardHolder
           type="F"
