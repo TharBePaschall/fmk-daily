@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useRef } from 'react'
 
-function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData, onTouchDrop, selectedCard, onClick }) {
-  const [isDragOver, setIsDragOver] = useState(false)
+function CardHolder({ type, assignedPersonality, onRemove, selectedCard, onClick }) {
   const holderRef = useRef(null)
 
   const colors = {
@@ -12,59 +11,17 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData
 
   const color = colors[type]
 
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setIsDragOver(true)
-  }
-
-  const handleDragLeave = () => {
-    setIsDragOver(false)
-  }
-
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setIsDragOver(false)
-    const personality = JSON.parse(e.dataTransfer.getData('personality'))
-    onDrop(type, personality)
-  }
-
   const initial = assignedPersonality ? assignedPersonality.name.charAt(0).toUpperCase() : ''
   const thumbnailUrl = assignedPersonality ? assignedPersonality.thumbnail : null
 
   const hasSelectedCard = selectedCard && !assignedPersonality
   const canAcceptSelection = hasSelectedCard && onClick
 
-  let holderClasses = 'drop-zone relative aspect-[3/5] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all duration-200'
+  let holderClasses = 'relative aspect-[3/5] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all duration-200'
   holderClasses += ' bg-gradient-to-br ' + color.bg + ' ' + color.border
-  if (isDragOver) {
-    holderClasses += ' drag-over border-solid'
-  }
   if (canAcceptSelection) {
     holderClasses += ' cursor-pointer hover:scale-105 hover:border-solid hover:shadow-lg'
   }
-
-  // Handle touch-based drop detection
-  useEffect(() => {
-    if (!touchDragData || !holderRef.current || !touchDragData.endPos) return
-
-    const { endPos } = touchDragData
-    const rect = holderRef.current.getBoundingClientRect()
-    
-    // Check if touch end position is within this cardholder's bounds
-    if (
-      endPos.x >= rect.left &&
-      endPos.x <= rect.right &&
-      endPos.y >= rect.top &&
-      endPos.y <= rect.bottom
-    ) {
-      // Only process if this is a valid drop (not just a tap)
-      if (touchDragData.personality) {
-        onTouchDrop?.(type, touchDragData.personality)
-        setIsDragOver(false)
-      }
-    }
-  }, [touchDragData, type, onTouchDrop])
 
   const handleClick = () => {
     if (canAcceptSelection && onClick) {
@@ -85,9 +42,6 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData
       ref={holderRef}
       className={holderClasses}
       data-holder-type={type}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
       onClick={handleClick}
       onTouchEnd={handleTouchEnd}
     >
@@ -129,7 +83,7 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData
           {/* Ghost outline for empty holder */}
           <div className="card-holder-ghost">
             <span className="card-holder-ghost-text">
-              {canAcceptSelection ? 'Tap to place selected card' : 'Drag card here'}
+              {canAcceptSelection ? 'Tap to place selected card' : 'Tap a card above to select'}
             </span>
           </div>
         </div>

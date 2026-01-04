@@ -4,8 +4,6 @@ import CardHolder from './CardHolder.jsx'
 import { getPersonalityDetails } from '../lib/wikipedia'
 
 function GameBoard({ personalities, assignments, setAssignments }) {
-  const [draggingPersonality, setDraggingPersonality] = useState(null)
-  const [touchDragData, setTouchDragData] = useState(null)
   const [selectedCard, setSelectedCard] = useState(null)
   const [selectedCardWikiData, setSelectedCardWikiData] = useState(null)
   const [isLoadingWikiData, setIsLoadingWikiData] = useState(false)
@@ -75,7 +73,7 @@ function GameBoard({ personalities, assignments, setAssignments }) {
     }
   }, [selectedCard])
 
-  const handleDrop = (type, personality) => {
+  const handlePlaceCard = (type, personality) => {
     // Remove personality from any existing assignment
     const newAssignments = { ...assignments }
     
@@ -88,13 +86,7 @@ function GameBoard({ personalities, assignments, setAssignments }) {
     // Assign to new slot
     newAssignments[type] = personality
     setAssignments(newAssignments)
-    setDraggingPersonality(null)
-    setTouchDragData(null)
-    setSelectedCard(null) // Clear selection after drop
-  }
-
-  const handleTouchDrop = (type, personality) => {
-    handleDrop(type, personality)
+    setSelectedCard(null) // Clear selection after placement
   }
 
   const handleRemove = (type) => {
@@ -116,7 +108,7 @@ function GameBoard({ personalities, assignments, setAssignments }) {
 
   const handleHolderClick = (type) => {
     if (selectedCard) {
-      handleDrop(type, selectedCard)
+      handlePlaceCard(type, selectedCard)
     }
   }
 
@@ -129,7 +121,7 @@ function GameBoard({ personalities, assignments, setAssignments }) {
 
   return (
     <div ref={gameBoardRef} className="max-w-4xl mx-auto">
-      {/* Cards to drag */}
+      {/* Cards */}
       <div className="grid grid-cols-3 gap-3 md:gap-6 mb-8">
         {personalities.map(personality => (
           <Card
@@ -138,10 +130,6 @@ function GameBoard({ personalities, assignments, setAssignments }) {
             isAssigned={isPersonalityAssigned(personality)}
             isFirstUnassigned={firstUnassignedCard?.id === personality.id}
             isSelected={selectedCard?.id === personality.id}
-            onDragStart={setDraggingPersonality}
-            onDragEnd={() => setDraggingPersonality(null)}
-            onTouchStart={(touchData) => setTouchDragData(touchData)}
-            onTouchEnd={(touchEndData) => setTouchDragData(touchEndData)}
             onSelect={handleCardSelect}
             disabled={isPersonalityAssigned(personality)}
           />
@@ -193,38 +181,29 @@ function GameBoard({ personalities, assignments, setAssignments }) {
       <p className="text-center text-slate-400 mb-4 text-sm">
         {selectedCard 
           ? `Selected: ${selectedCard.name}. Tap an F/M/K holder below to place it.`
-          : 'Tap a card to select it, then tap F/M/K to place it (or drag and drop)'}
+          : 'Tap a card to select it, then tap F/M/K to place it'}
       </p>
 
-      {/* Drop zones */}
+      {/* Card holders */}
       <div className="grid grid-cols-3 gap-3 md:gap-6">
         <CardHolder
           type="F"
           assignedPersonality={assignments.F}
-          onDrop={handleDrop}
           onRemove={handleRemove}
-          touchDragData={touchDragData}
-          onTouchDrop={handleTouchDrop}
           selectedCard={selectedCard}
           onClick={handleHolderClick}
         />
         <CardHolder
           type="M"
           assignedPersonality={assignments.M}
-          onDrop={handleDrop}
           onRemove={handleRemove}
-          touchDragData={touchDragData}
-          onTouchDrop={handleTouchDrop}
           selectedCard={selectedCard}
           onClick={handleHolderClick}
         />
         <CardHolder
           type="K"
           assignedPersonality={assignments.K}
-          onDrop={handleDrop}
           onRemove={handleRemove}
-          touchDragData={touchDragData}
-          onTouchDrop={handleTouchDrop}
           selectedCard={selectedCard}
           onClick={handleHolderClick}
         />

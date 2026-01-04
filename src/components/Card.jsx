@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { getPersonalityDetails } from '../lib/wikipedia'
 
-function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onDragStart, onDragEnd, disabled, onTouchStart: onTouchDragStart, onTouchEnd: onTouchDragEnd, onSelect }) {
+function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onSelect, disabled }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [wikiData, setWikiData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
-  const [touchStartPos, setTouchStartPos] = useState(null)
   const [shouldPulse, setShouldPulse] = useState(false)
   const cardRef = useRef(null)
   const expandedRef = useRef(null)
@@ -87,11 +85,6 @@ function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onDragSt
   }, [isExpanded])
 
   const handleClick = (e) => {
-    if (isDragging) {
-      setIsDragging(false)
-      return
-    }
-    
     if (disabled) return
 
     // Remove pulse on click/interaction
@@ -104,7 +97,7 @@ function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onDragSt
         setIsExpanded(true)
         return
       }
-      // Single click/tap - toggle selection
+      // Single click/tap - select the card (shows preview panel)
       onSelect(personality)
     } else {
       // If assigned, just open expanded view
@@ -112,118 +105,18 @@ function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onDragSt
     }
   }
 
-  const handleDragStart = (e) => {
-    if (isFlipped || disabled) {
-      e.preventDefault()
-      return
-    }
-    
-    // Remove pulse on drag start
-    setShouldPulse(false)
-    setIsDragging(true)
-    e.dataTransfer.setData('personality', JSON.stringify(personality))
-    e.dataTransfer.effectAllowed = 'move'
-    
-    // Create a custom drag image to prevent flipping
-    // Use the front face of the card only, without any transforms
-    const cardFront = cardRef.current.querySelector('.card-front')
-    if (cardFront) {
-      const dragImage = cardFront.cloneNode(true)
-      dragImage.style.transform = 'none'
-      dragImage.style.opacity = '0.8'
-      dragImage.style.position = 'fixed'
-      dragImage.style.top = '-1000px'
-      dragImage.style.left = '-1000px'
-      dragImage.style.width = cardRef.current.offsetWidth + 'px'
-      dragImage.style.height = cardRef.current.offsetHeight + 'px'
-      document.body.appendChild(dragImage)
-      
-      // Set the drag image offset to center
-      const rect = cardRef.current.getBoundingClientRect()
-      e.dataTransfer.setDragImage(dragImage, rect.width / 2, rect.height / 2)
-      
-      // Clean up after a short delay
-      setTimeout(() => {
-        if (document.body.contains(dragImage)) {
-          document.body.removeChild(dragImage)
-        }
-      }, 0)
-    }
-    
-    onDragStart?.(personality)
-  }
-
-  const handleDragEnd = (e) => {
-    setTimeout(() => setIsDragging(false), 100)
-    onDragEnd?.(e)
-  }
-
-  // Touch event handlers for mobile
-  const handleTouchStart = (e) => {
-    if (isFlipped || disabled || isAssigned) {
-      return
-    }
-
-    // Remove pulse on touch start (user interaction)
-    setShouldPulse(false)
-    const touch = e.touches[0]
-    const touchData = { 
-      x: touch.clientX, 
-      y: touch.clientY, 
-      time: Date.now(),
-      personality 
-    }
-    setTouchStartPos(touchData)
-    setIsDragging(true)
-    onTouchDragStart?.(touchData)
-  }
-
-  const handleTouchMove = (e) => {
-    if (!touchStartPos || !isDragging) return
-
-    // Prevent scrolling while dragging
-    e.preventDefault()
-  }
-
   const handleTouchEnd = (e) => {
-    if (!touchStartPos || !isDragging) {
-      setTouchStartPos(null)
-      return
+    if (disabled) return
+
+    // Remove pulse on touch
+    setShouldPulse(false)
+    
+    // Handle selection on tap
+    if (!isAssigned && onSelect) {
+      onSelect(personality)
+    } else {
+      handleClick({ detail: 1, type: 'click' })
     }
-
-    const touch = e.changedTouches[0]
-    const endPos = { x: touch.clientX, y: touch.clientY }
-    const timeDiff = Date.now() - touchStartPos.time
-    const distance = Math.sqrt(
-      Math.pow(endPos.x - touchStartPos.x, 2) + 
-      Math.pow(endPos.y - touchStartPos.y, 2)
-    )
-
-    // If it was a quick tap (not a drag), treat it as a click/selection
-    if (timeDiff < 300 && distance < 10) {
-      setIsDragging(false)
-      setTouchStartPos(null)
-      // Clear touch drag data to prevent accidental drops
-      onTouchDragEnd?.(null)
-      // Handle selection on tap
-      if (!isAssigned && onSelect) {
-        onSelect(personality)
-      } else {
-        handleClick({ detail: 1, type: 'click' })
-      }
-      return
-    }
-
-    // Pass touch end data to parent to handle drop detection
-    onTouchDragEnd?.({
-      personality: touchStartPos.personality,
-      endPos,
-      startPos: { x: touchStartPos.x, y: touchStartPos.y }
-    })
-
-    setIsDragging(false)
-    setTouchStartPos(null)
-    onDragEnd?.(e)
   }
 
   const initial = personality.name.charAt(0).toUpperCase()
@@ -235,7 +128,7 @@ function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onDragSt
     'card-flip',
     'w-full',
     'aspect-[2/3] md:aspect-[3/4]',
-    isFlipped ? 'flipped' : 'cursor-grab active:cursor-grabbing',
+    isFlipped ? 'flipped' : 'cursor-pointer',
     isAssigned ? 'opacity-50 pointer-events-none' : '',
     shouldPulse ? 'pulse' : '',
     isSelected ? 'ring-4 ring-blue-500 ring-offset-2 ring-offset-slate-900' : ''
@@ -246,19 +139,8 @@ function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onDragSt
       <div
         ref={cardRef}
         className={cardClasses}
-        draggable={!disabled && !isFlipped && !isExpanded}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
         onClick={handleClick}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onTouchCancel={() => {
-          setIsDragging(false)
-          setTouchStartPos(null)
-          onTouchDragEnd?.(null)
-        }}
-        style={{ touchAction: isDragging ? 'none' : 'auto' }}
       >
         <div className="card-flip-inner relative w-full h-full">
           {/* Front of card */}
