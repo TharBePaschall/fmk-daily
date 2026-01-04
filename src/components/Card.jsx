@@ -1,15 +1,25 @@
 import { useState, useEffect, useRef } from 'react'
 import { getPersonalityDetails } from '../lib/wikipedia'
 
-function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTouchStart: onTouchDragStart, onTouchEnd: onTouchDragEnd }) {
+function Card({ personality, isAssigned, isFirstUnassigned, onDragStart, onDragEnd, disabled, onTouchStart: onTouchDragStart, onTouchEnd: onTouchDragEnd }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [wikiData, setWikiData] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [touchStartPos, setTouchStartPos] = useState(null)
+  const [shouldPulse, setShouldPulse] = useState(false)
   const cardRef = useRef(null)
   const expandedRef = useRef(null)
+
+  // Enable pulse for first unassigned card, disable after interaction
+  useEffect(() => {
+    if (isFirstUnassigned && !isAssigned && !disabled) {
+      setShouldPulse(true)
+    } else {
+      setShouldPulse(false)
+    }
+  }, [isFirstUnassigned, isAssigned, disabled])
 
   // Fetch Wikipedia data when card is first flipped or expanded
   useEffect(() => {
@@ -84,6 +94,8 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
     
     if (disabled) return
 
+    // Remove pulse on click/interaction
+    setShouldPulse(false)
     // Open expanded view instead of flipping
     setIsExpanded(true)
   }
@@ -94,6 +106,8 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
       return
     }
     
+    // Remove pulse on drag start
+    setShouldPulse(false)
     setIsDragging(true)
     e.dataTransfer.setData('personality', JSON.stringify(personality))
     e.dataTransfer.effectAllowed = 'move'
@@ -138,6 +152,8 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
       return
     }
 
+    // Remove pulse on touch start (user interaction)
+    setShouldPulse(false)
     const touch = e.touches[0]
     const touchData = { 
       x: touch.clientX, 
@@ -203,7 +219,8 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
     'w-full',
     'aspect-[2/3] md:aspect-[3/4]',
     isFlipped ? 'flipped' : 'cursor-grab active:cursor-grabbing',
-    isAssigned ? 'opacity-50 pointer-events-none' : ''
+    isAssigned ? 'opacity-50 pointer-events-none' : '',
+    shouldPulse ? 'pulse' : ''
   ].filter(Boolean).join(' ')
 
   return (
@@ -228,6 +245,12 @@ function Card({ personality, isAssigned, onDragStart, onDragEnd, disabled, onTou
         <div className="card-flip-inner relative w-full h-full">
           {/* Front of card */}
           <div className="card-front absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-xl border border-slate-600 overflow-hidden flex flex-col">
+            {/* Drag handle icon */}
+            {!isAssigned && !disabled && (
+              <div className="drag-handle absolute top-2 right-2 z-10 text-slate-400 text-lg leading-none" aria-hidden="true">
+                ≡≡
+              </div>
+            )}
             <div className="flex-1 bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center overflow-hidden min-h-0">
               {thumbnailUrl ? (
                 <img 

@@ -107,3 +107,51 @@ body {
   font-size: 1rem;
   line-height: 1.6;
 }
+
+/* Pulsing animation for first unassigned card */
+@keyframes cardPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.card-flip.pulse:not(.flipped) {
+  animation: cardPulse 1.5s ease-in-out infinite;
+}
+
+/* Drag handle icon styling */
+.drag-handle {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  font-weight: 300;
+  letter-spacing: -0.1em;
+}
+
+.card-flip:hover .drag-handle,
+.card-flip:active .drag-handle {
+  opacity: 0.8;
+}
+
+/* Ghost outline for empty card holders */
+.card-holder-ghost {
+  position: absolute;
+  inset: 0.75rem;
+  border: 2px dashed rgba(148, 163, 184, 0.4);
+  border-radius: 0.75rem;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-holder-ghost-text {
+  color: rgba(148, 163, 184, 0.5);
+  font-size: 0.75rem;
+  text-align: center;
+  padding: 0.5rem;
+}

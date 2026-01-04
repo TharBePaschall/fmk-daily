@@ -103,9 +103,15 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData
           </button>
         </div>
       ) : (
-        <span className={'text-sm opacity-70 ' + color.text}>
-          Drop here
-        </span>
+        <>
+          {/* Ghost outline for empty holder */}
+          <div className="card-holder-ghost">
+            <span className="card-holder-ghost-text">Drag card here</span>
+          </div>
+          <span className={'text-sm opacity-70 ' + color.text + ' relative z-10'}>
+            Drop here
+          </span>
+        </>
       )}
     </div>
   )
