@@ -8,6 +8,7 @@ function GameBoard({ personalities, assignments, setAssignments }) {
   const [selectedCardWikiData, setSelectedCardWikiData] = useState(null)
   const [isLoadingWikiData, setIsLoadingWikiData] = useState(false)
   const gameBoardRef = useRef(null)
+  const previewPanelRef = useRef(null)
 
   // Fetch Wikipedia data when a card is selected
   useEffect(() => {
@@ -35,12 +36,13 @@ function GameBoard({ personalities, assignments, setAssignments }) {
 
       const target = event.target
       
-      // Check if click is on a card or cardholder
+      // Check if click is on a card, cardholder, or preview panel
       const isCard = target.closest('.card-flip')
       const isCardHolder = target.closest('[data-holder-type]')
+      const isPreviewPanel = previewPanelRef.current && previewPanelRef.current.contains(target)
       
-      // If click is outside both cards and cardholders, deselect
-      if (!isCard && !isCardHolder) {
+      // If click is outside cards, cardholders, and preview panel, deselect
+      if (!isCard && !isCardHolder && !isPreviewPanel) {
         setSelectedCard(null)
       }
     }
@@ -50,12 +52,13 @@ function GameBoard({ personalities, assignments, setAssignments }) {
 
       const target = event.target
       
-      // Check if touch is on a card or cardholder
+      // Check if touch is on a card, cardholder, or preview panel
       const isCard = target.closest('.card-flip')
       const isCardHolder = target.closest('[data-holder-type]')
+      const isPreviewPanel = previewPanelRef.current && previewPanelRef.current.contains(target)
       
-      // If touch is outside both cards and cardholders, deselect
-      if (!isCard && !isCardHolder) {
+      // If touch is outside cards, cardholders, and preview panel, deselect
+      if (!isCard && !isCardHolder && !isPreviewPanel) {
         setSelectedCard(null)
       }
     }
@@ -138,7 +141,7 @@ function GameBoard({ personalities, assignments, setAssignments }) {
 
       {/* Selected Card Preview */}
       {selectedCard && (
-        <div className="mb-6 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border-2 border-blue-500 p-4 md:p-6 shadow-xl">
+        <div ref={previewPanelRef} className="mb-6 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border-2 border-blue-500 p-4 md:p-6 shadow-xl">
           <div className="flex flex-col md:flex-row gap-4 md:gap-6">
             {/* Image */}
             <div className="flex-shrink-0 w-full md:w-48 h-48 md:h-64 bg-slate-700 rounded-xl overflow-hidden flex items-center justify-center">
