@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Card from './Card.jsx'
 import CardHolder from './CardHolder.jsx'
 import { getPersonalityDetails } from '../lib/wikipedia'
@@ -9,6 +9,7 @@ function GameBoard({ personalities, assignments, setAssignments }) {
   const [selectedCard, setSelectedCard] = useState(null)
   const [selectedCardWikiData, setSelectedCardWikiData] = useState(null)
   const [isLoadingWikiData, setIsLoadingWikiData] = useState(false)
+  const gameBoardRef = useRef(null)
 
   // Fetch Wikipedia data when a card is selected
   useEffect(() => {
@@ -26,6 +27,53 @@ function GameBoard({ personalities, assignments, setAssignments }) {
       setSelectedCardWikiData(null)
     }
   }, [selectedCard, selectedCardWikiData, isLoadingWikiData])
+
+  // Handle click outside cards and cardholders to deselect
+  useEffect(() => {
+    if (!selectedCard) return
+
+    const handleClickOutside = (event) => {
+      if (!gameBoardRef.current) return
+
+      const target = event.target
+      
+      // Check if click is on a card or cardholder
+      const isCard = target.closest('.card-flip')
+      const isCardHolder = target.closest('[data-holder-type]')
+      
+      // If click is outside both cards and cardholders, deselect
+      if (!isCard && !isCardHolder) {
+        setSelectedCard(null)
+      }
+    }
+
+    const handleTouchOutside = (event) => {
+      if (!gameBoardRef.current) return
+
+      const target = event.target
+      
+      // Check if touch is on a card or cardholder
+      const isCard = target.closest('.card-flip')
+      const isCardHolder = target.closest('[data-holder-type]')
+      
+      // If touch is outside both cards and cardholders, deselect
+      if (!isCard && !isCardHolder) {
+        setSelectedCard(null)
+      }
+    }
+
+    // Add event listeners with a small delay to avoid immediate deselection
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside)
+      document.addEventListener('touchstart', handleTouchOutside)
+    }, 10)
+
+    return () => {
+      clearTimeout(timeoutId)
+      document.removeEventListener('click', handleClickOutside)
+      document.removeEventListener('touchstart', handleTouchOutside)
+    }
+  }, [selectedCard])
 
   const handleDrop = (type, personality) => {
     // Remove personality from any existing assignment
@@ -80,7 +128,7 @@ function GameBoard({ personalities, assignments, setAssignments }) {
   const firstUnassignedCard = personalities.find(p => !isPersonalityAssigned(p))
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div ref={gameBoardRef} className="max-w-4xl mx-auto">
       {/* Cards to drag */}
       <div className="grid grid-cols-3 gap-3 md:gap-6 mb-8">
         {personalities.map(personality => (

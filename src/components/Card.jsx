@@ -263,12 +263,6 @@ function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onDragSt
         <div className="card-flip-inner relative w-full h-full">
           {/* Front of card */}
           <div className={`card-front absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-xl border overflow-hidden flex flex-col ${isSelected ? 'border-blue-500 border-4' : 'border-slate-600'}`}>
-            {/* Drag handle icon */}
-            {!isAssigned && !disabled && (
-              <div className="drag-handle absolute top-2 right-2 z-10 text-slate-400 text-lg leading-none" aria-hidden="true">
-                ≡≡
-              </div>
-            )}
             <div className="flex-1 bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center overflow-hidden min-h-0">
               {thumbnailUrl ? (
                 <img 
