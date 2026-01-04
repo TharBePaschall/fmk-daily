@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { getPersonalityDetails } from '../lib/wikipedia'
 
-function Card({ personality, isAssigned, isFirstUnassigned, onDragStart, onDragEnd, disabled, onTouchStart: onTouchDragStart, onTouchEnd: onTouchDragEnd }) {
+function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onDragStart, onDragEnd, disabled, onTouchStart: onTouchDragStart, onTouchEnd: onTouchDragEnd, onSelect }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [wikiData, setWikiData] = useState(null)
@@ -86,7 +86,7 @@ function Card({ personality, isAssigned, isFirstUnassigned, onDragStart, onDragE
     }
   }, [isExpanded])
 
-  const handleClick = () => {
+  const handleClick = (e) => {
     if (isDragging) {
       setIsDragging(false)
       return
@@ -96,8 +96,20 @@ function Card({ personality, isAssigned, isFirstUnassigned, onDragStart, onDragE
 
     // Remove pulse on click/interaction
     setShouldPulse(false)
-    // Open expanded view instead of flipping
-    setIsExpanded(true)
+    
+    // If card is not assigned, handle selection
+    if (!isAssigned && onSelect) {
+      // Double-click opens expanded view (desktop only)
+      if (e.detail === 2 || e.type === 'dblclick') {
+        setIsExpanded(true)
+        return
+      }
+      // Single click/tap - toggle selection
+      onSelect(personality)
+    } else {
+      // If assigned, just open expanded view
+      setIsExpanded(true)
+    }
   }
 
   const handleDragStart = (e) => {
@@ -187,13 +199,18 @@ function Card({ personality, isAssigned, isFirstUnassigned, onDragStart, onDragE
       Math.pow(endPos.y - touchStartPos.y, 2)
     )
 
-    // If it was a quick tap (not a drag), treat it as a click
+    // If it was a quick tap (not a drag), treat it as a click/selection
     if (timeDiff < 300 && distance < 10) {
       setIsDragging(false)
       setTouchStartPos(null)
       // Clear touch drag data to prevent accidental drops
       onTouchDragEnd?.(null)
-      handleClick()
+      // Handle selection on tap
+      if (!isAssigned && onSelect) {
+        onSelect(personality)
+      } else {
+        handleClick({ detail: 1, type: 'click' })
+      }
       return
     }
 
@@ -220,7 +237,8 @@ function Card({ personality, isAssigned, isFirstUnassigned, onDragStart, onDragE
     'aspect-[2/3] md:aspect-[3/4]',
     isFlipped ? 'flipped' : 'cursor-grab active:cursor-grabbing',
     isAssigned ? 'opacity-50 pointer-events-none' : '',
-    shouldPulse ? 'pulse' : ''
+    shouldPulse ? 'pulse' : '',
+    isSelected ? 'ring-4 ring-blue-500 ring-offset-2 ring-offset-slate-900' : ''
   ].filter(Boolean).join(' ')
 
   return (
@@ -244,7 +262,7 @@ function Card({ personality, isAssigned, isFirstUnassigned, onDragStart, onDragE
       >
         <div className="card-flip-inner relative w-full h-full">
           {/* Front of card */}
-          <div className="card-front absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-xl border border-slate-600 overflow-hidden flex flex-col">
+          <div className={`card-front absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-800 rounded-2xl shadow-xl border overflow-hidden flex flex-col ${isSelected ? 'border-blue-500 border-4' : 'border-slate-600'}`}>
             {/* Drag handle icon */}
             {!isAssigned && !disabled && (
               <div className="drag-handle absolute top-2 right-2 z-10 text-slate-400 text-lg leading-none" aria-hidden="true">
@@ -269,7 +287,7 @@ function Card({ personality, isAssigned, isFirstUnassigned, onDragStart, onDragE
                 {personality.name}
               </h3>
               <div className="absolute bottom-2 right-2 text-slate-500 text-xs whitespace-nowrap">
-                Tap to expand
+                {isSelected ? 'Selected' : 'Tap to select'}
               </div>
             </div>
           </div>

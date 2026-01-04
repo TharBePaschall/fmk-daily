@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 
-function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData, onTouchDrop }) {
+function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData, onTouchDrop, selectedCard, onClick }) {
   const [isDragOver, setIsDragOver] = useState(false)
   const holderRef = useRef(null)
 
@@ -32,10 +32,16 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData
   const initial = assignedPersonality ? assignedPersonality.name.charAt(0).toUpperCase() : ''
   const thumbnailUrl = assignedPersonality ? assignedPersonality.thumbnail : null
 
+  const hasSelectedCard = selectedCard && !assignedPersonality
+  const canAcceptSelection = hasSelectedCard && onClick
+
   let holderClasses = 'drop-zone relative aspect-[3/5] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all duration-200'
   holderClasses += ' bg-gradient-to-br ' + color.bg + ' ' + color.border
   if (isDragOver) {
     holderClasses += ' drag-over border-solid'
+  }
+  if (canAcceptSelection) {
+    holderClasses += ' cursor-pointer hover:scale-105 hover:border-solid hover:shadow-lg'
   }
 
   // Handle touch-based drop detection
@@ -60,6 +66,20 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData
     }
   }, [touchDragData, type, onTouchDrop])
 
+  const handleClick = () => {
+    if (canAcceptSelection && onClick) {
+      onClick(type)
+    }
+  }
+
+  const handleTouchEnd = (e) => {
+    // Only handle touch if there's a selected card and this holder is empty
+    if (canAcceptSelection && onClick) {
+      e.preventDefault()
+      onClick(type)
+    }
+  }
+
   return (
     <div
       ref={holderRef}
@@ -68,6 +88,8 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onClick={handleClick}
+      onTouchEnd={handleTouchEnd}
     >
       <div className={'text-2xl font-bold mb-2 ' + color.text + ' relative z-20'}>
         {color.label}
@@ -106,7 +128,9 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData
         <div className="relative flex-1 w-full flex items-center justify-center">
           {/* Ghost outline for empty holder */}
           <div className="card-holder-ghost">
-            <span className="card-holder-ghost-text">Drag card here</span>
+            <span className="card-holder-ghost-text">
+              {canAcceptSelection ? 'Tap to place selected card' : 'Drag card here'}
+            </span>
           </div>
         </div>
       )}
