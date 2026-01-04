@@ -9,6 +9,7 @@ function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onSelect
   const [shouldPulse, setShouldPulse] = useState(false)
   const cardRef = useRef(null)
   const expandedRef = useRef(null)
+  const touchHandledRef = useRef(false)
 
   // Enable pulse for first unassigned card, disable after interaction
   useEffect(() => {
@@ -85,6 +86,12 @@ function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onSelect
   }, [isExpanded])
 
   const handleClick = (e) => {
+    // Prevent click from firing after touch event on mobile devices
+    if (touchHandledRef.current) {
+      touchHandledRef.current = false
+      return
+    }
+
     if (disabled) return
 
     // Remove pulse on click/interaction
@@ -108,6 +115,9 @@ function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onSelect
   const handleTouchEnd = (e) => {
     if (disabled) return
 
+    // Mark that touch was handled to prevent synthetic click event
+    touchHandledRef.current = true
+
     // Remove pulse on touch
     setShouldPulse(false)
     
@@ -115,8 +125,14 @@ function Card({ personality, isAssigned, isFirstUnassigned, isSelected, onSelect
     if (!isAssigned && onSelect) {
       onSelect(personality)
     } else {
-      handleClick({ detail: 1, type: 'click' })
+      // For assigned cards, open expanded view
+      setIsExpanded(true)
     }
+
+    // Reset the flag after a short delay to allow for the click event to be ignored
+    setTimeout(() => {
+      touchHandledRef.current = false
+    }, 300)
   }
 
   const initial = personality.name.charAt(0).toUpperCase()
