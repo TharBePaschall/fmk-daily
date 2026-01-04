@@ -69,7 +69,7 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <div className={'text-2xl font-bold mb-2 ' + color.text}>
+      <div className={'text-2xl font-bold mb-2 ' + color.text + ' relative z-20'}>
         {color.label}
       </div>
 
@@ -103,15 +103,12 @@ function CardHolder({ type, assignedPersonality, onDrop, onRemove, touchDragData
           </button>
         </div>
       ) : (
-        <>
+        <div className="relative flex-1 w-full flex items-center justify-center">
           {/* Ghost outline for empty holder */}
           <div className="card-holder-ghost">
             <span className="card-holder-ghost-text">Drag card here</span>
           </div>
-          <span className={'text-sm opacity-70 ' + color.text + ' relative z-10'}>
-            Drop here
-          </span>
-        </>
+        </div>
       )}
     </div>
   )
